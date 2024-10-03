@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, message, Input } from 'antd';
 import { category } from '../../../service';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { EditOutlined, DeleteOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import CategoryModal from '@modals';
 import { GlobalPopconfirm } from '../../component';
-import TableComponent from '../../component/global-table'; // Use your TableComponent
+import TableComponent from '../../component/global-table';
 import './index.css';
 
 const Category = () => {
     const [data, setData] = useState([]);
     const [open, setOpen] = useState(false);
-    const [update, setUpdate] = useState(null);
+    const [editingCategory, setEditingCategory] = useState(null);
     const [total, setTotal] = useState(0);
     const [params, setParams] = useState({
         search: '',
-        page: 3,
-        limit: 3,
+        page: 1,
+        limit: 5,
     });
 
     const navigate = useNavigate();
@@ -24,14 +24,14 @@ const Category = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(search);
-        let page = Number(params.get("page")) || 3;
-        let limit = Number(params.get("limit")) || 3;
-        let search_val = params.get("search") || '';
+        const page = Number(params.get('page')) || 1;
+        const limit = Number(params.get('limit')) || 5;
+        const searchParam = params.get("search") || "";
         setParams((prev) => ({
             ...prev,
             page: page,
             limit: limit,
-            search: search_val,
+            search: searchParam,
         }));
     }, [search]);
 
@@ -39,7 +39,7 @@ const Category = () => {
         try {
             const res = await category.get(params);
             setData(res?.data?.data?.categories || []);
-            setTotal(res?.data?.data?.total || 0);
+            setTotal(res?.data?.data?.count || 0); // count o'zgaruvchisi
         } catch (err) {
             console.error(err);
         }
@@ -61,7 +61,7 @@ const Category = () => {
     };
 
     const editItem = (item) => {
-        setUpdate(item);
+        setEditingCategory(item);
         setOpen(true);
     };
 
@@ -77,6 +77,24 @@ const Category = () => {
         const search_params = new URLSearchParams(search);
         search_params.set("search", event.target.value);
         navigate(`?${search_params}`);
+    };
+
+    const handlePageChange = (pagination) => {
+        const { current, pageSize } = pagination;
+        setParams((prev) => ({
+            ...prev,
+            page: current,
+            limit: pageSize,
+        }));
+        const current_params = new URLSearchParams(search);
+        current_params.set('page', `${current}`);
+        current_params.set('limit', `${pageSize}`);
+        navigate(`?${current_params}`);
+    };
+
+    const handleCancel = () => {
+        setOpen(false);
+        setEditingCategory(null);
     };
 
     const columns = [
@@ -108,30 +126,6 @@ const Category = () => {
         },
     ];
 
-    const handleCancel = () => {
-        setOpen(false);
-        setUpdate(null);
-    };
-
-    const handlePageChange = (pagination) => {
-        const { current =  3, pageSize = 10 } = pagination;
-
-        setParams((prev) => ({
-            ...prev,
-            page: current,
-            limit: pageSize,
-        }));
-        
-        const search_params = new URLSearchParams(search);
-        search_params.set("page", current);  // Sahifa raqamini yangilash
-        search_params.set("limit", pageSize);  // Limitni yangilash
-        navigate(`?${search_params}`);  // URL ni yangilab, sahifani qayta yuklash
-    };
-
-    const refreshData = () => {
-        getData();
-    };
-
     return (
         <div>
             <div className="header-container">
@@ -139,8 +133,8 @@ const Category = () => {
                     placeholder="Search..."
                     onChange={handleSearchChange}
                     value={params.search}
-                    className="search-input"  // Kenglik uchun class qo'shish
-                    style={{ marginBottom: '16px' }} // Mobil qurilmalardagi margin
+                    className="search-input"
+                    style={{ marginBottom: '16px' }}
                 />
                 <Button className="add-btn" type="primary" onClick={() => setOpen(true)}>Add New Category</Button>
             </div>
@@ -161,8 +155,8 @@ const Category = () => {
             <CategoryModal
                 open={open}
                 handleCancel={handleCancel}
-                category={update}
-                refreshData={refreshData}
+                category={editingCategory}
+                refreshData={getData} // Yangilanishdan keyin yangi ma'lumotlarni olish
             />
         </div>
     );

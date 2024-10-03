@@ -7,11 +7,11 @@ import { UploadOutlined } from '@ant-design/icons';
 const BrandModal = ({ open, handleCancel, brand, refreshData }) => {  
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
+    const [imageFile, setImageFile] = useState(null);
     const [imageUrl, setImageUrl] = useState(null);
     const [categories, setCategories] = useState([]);
 
     useEffect(() => {
-        // Fetch categories when modal is opened
         const fetchCategories = async () => {
             try {
                 const res = await categoryService.get();
@@ -21,18 +21,19 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
             }
         };
 
-        if (open) fetchCategories();
-
-        if (brand) {
-            form.setFieldsValue({
-                name: brand.name, 
-                description: brand.description,
-                category_id: brand.category_id,
-            });
-            setImageUrl(brand.image); 
-        } else {
-            form.resetFields(); 
-            setImageUrl(null); 
+        if (open) {
+            fetchCategories();
+            if (brand) {
+                form.setFieldsValue({
+                    name: brand.name, 
+                    description: brand.description,
+                    category_id: brand.category_id,
+                });
+                setImageUrl(brand.image); 
+            } else {
+                form.resetFields(); 
+                setImageUrl(null); 
+            }
         }
     }, [brand, form, open]);
 
@@ -40,13 +41,21 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
         setLoading(true);
         
         try {
-            values.image = imageUrl;
+            const formData = new FormData();
+            formData.append("name", values.name);
+            formData.append("description", values.description);
+            formData.append("category_id", values.category_id);
+
+            // Handle image upload
+            if (imageFile) {
+                formData.append("file", imageFile);
+            }
 
             if (brand?.id) {
-                await brandService.update(brand.id, values);
+                await brandService.update(brand.id, formData);
                 message.success("Brand updated successfully");
             } else {
-                await brandService.create(values);
+                await brandService.create(formData);
                 message.success("Brand created successfully");
             }
             refreshData(); 
@@ -61,6 +70,7 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
 
     const handleImageChange = (info) => {
         if (info.file.status === 'done') {
+            setImageFile(info.file.originFileObj);
             const url = URL.createObjectURL(info.file.originFileObj); 
             setImageUrl(url);
             message.success(`${info.file.name} file uploaded successfully`);
@@ -79,9 +89,8 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
             <Form
                 form={form}
                 name="brandForm"
-                style={{ width: '100%', marginTop: '20px' }}
-                onFinish={handleSubmit}
                 layout="vertical"
+                onFinish={handleSubmit}
             >
                 <Form.Item
                     label="Brand Name"
@@ -101,11 +110,10 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
 
                 <Form.Item
                     label="Image"
-                    name="image"
                     rules={[{ required: true, message: "Please upload an image" }]}
                 >
                     <Upload
-                        name="image"
+                        name="file"
                         listType="picture"
                         showUploadList={false}
                         onChange={handleImageChange}
@@ -118,7 +126,6 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
                             src={imageUrl} 
                             alt="Uploaded" 
                             style={{ marginTop: '10px', width: '100px', height: '100px' }} 
-                            
                         />
                     )}
                 </Form.Item>
@@ -131,7 +138,7 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
                     <Select
                         size="large"
                         placeholder="Select a category"
-                        options={categories.map((category) => ({
+                        options={categories.map(category => ({
                             label: category.name,
                             value: category.id
                         }))}

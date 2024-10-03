@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
-import { Button, Layout, Menu, theme } from 'antd';
-import { NavLink, useLocation, Outlet } from 'react-router-dom';
+import { MenuFoldOutlined, MenuUnfoldOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Button, Layout, Menu, theme, Modal, Space, Select } from 'antd';
+import { NavLink, useLocation, Outlet, useNavigate } from 'react-router-dom'; 
 import LogoImg from "../../assets/najot.jpg"; 
-import { Select, Space } from 'antd';
 import { useTranslation } from "react-i18next";
 import { FileProtectOutlined, TagsOutlined, SettingOutlined, StockOutlined, NotificationOutlined, TagOutlined, AppstoreOutlined } from '@ant-design/icons';
 
-const { Header, Sider, Content } = Layout;
+const { Header, Sider } = Layout;
 
 const Admin = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState("");
   const { pathname } = useLocation();
-
+  const navigate = useNavigate();
   const { t, i18n: { changeLanguage, language } } = useTranslation();
   const [languageState, setLanguageState] = useState(language);
-
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -40,17 +38,17 @@ const Admin = () => {
       icon: LogoImg,
     },
     {
-      content:  t("page2"),
+      content: t("page2"),
       path: "/admin-layout",
       icon: FileProtectOutlined,
     },
     {
-      content:  t("page3"),
+      content: t("page3"),
       path: "/admin-layout/category",
       icon: AppstoreOutlined,
     },
     {
-      content:  t("page4"),
+      content: t("page4"),
       path: "/admin-layout/brands",
       icon: TagOutlined,
     },
@@ -76,10 +74,27 @@ const Admin = () => {
     },
   ];
 
+  // Logout modal ko'rsatish uchun o'zgaruvchi
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  // Logout funktsiyasi
+  const handleLogout = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleOk = () => {
+    navigate('/login');
+    setIsModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
   return (
     <Layout>
       <Sider trigger={null} collapsible collapsed={collapsed} className="min-h-[100vh]">
-        <div className="demo-logo-vertical px-3" />
+        <div className="px-3 demo-logo-vertical" />
         <Menu
           theme="dark"
           mode="inline"
@@ -90,7 +105,7 @@ const Admin = () => {
               <img
                 src={LogoImg}
                 alt="Logo"
-                className="w-20 h-auto rounded-full object-cover"
+                className="object-cover w-20 h-auto rounded-full"
               />
             ) : (
               React.createElement(item.icon)
@@ -107,14 +122,18 @@ const Admin = () => {
                 )}
               </NavLink>
             ),
-          }))}
+          }))}  
         />
       </Sider>
       <Layout>
         <Header
           style={{
-            padding: 0,
+            padding: 30,
             background: colorBgContainer,
+            display: 'flex',
+            justifyContent: 'space-between', // Space-between qo'shish
+            alignItems: 'center',
+            
           }}
         >
           <Button
@@ -137,6 +156,19 @@ const Admin = () => {
                 { value: 'uz', label: 'uz' },
               ]}
             />
+            {/* Logout tugmasini yaxshiroq dizayn bilan qo'shish */}
+            <Button
+              type="primary"
+              icon={<LogoutOutlined />}
+              onClick={handleLogout}
+              style={{
+                borderRadius: borderRadiusLG, // Tugma burchaklarini yumshatish
+                display: 'flex',
+                alignItems: 'center',
+                height: '40px',
+                padding: '0 16px',
+              }}
+            />
           </Space>
         </Header>
         <div className="p-3">
@@ -153,6 +185,16 @@ const Admin = () => {
           </div>
         </div>
       </Layout>
+
+      {/* Logout tasdiqlash modal */}
+      <Modal
+        title="Tasdiqlash"
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <p>Hisobingizdan chiqmoqchimisiz?</p>
+      </Modal>
     </Layout>
   );
 };

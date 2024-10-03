@@ -1,21 +1,26 @@
-
-// src/pages/NotFound.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import ReactGA from 'react-ga';
+import './error.css'; // Make sure to import your CSS file
 
 const NotFound = () => {
+  // Initialize ReactGA
+  useEffect(() => {
+    ReactGA.initialize('YOUR_GA_TRACKING_ID'); // Replace with your Google Analytics tracking ID
+    ReactGA.set({ page: window.location.pathname });
+    ReactGA.pageview(window.location.pathname);
+  }, []);
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold text-red-600">404</h1>
-        <p className="mt-4 text-2xl font-semibold">Oops! Page not found</p>
-        <p className="mt-2 text-gray-500">The page you're looking for doesn't exist.</p>
-        <Link
-          to="/"
-          className="inline-block px-6 py-3 mt-6 text-white transition bg-blue-500 rounded hover:bg-blue-600"
-        >
-          Go Home
-        </Link>
+    <div id="notfound">
+      <div className="notfound">
+        <div className="notfound-404">
+          <h1>404</h1>
+          <h2>Page not found</h2>
+        </div>
+        <a href="#" onClick={() => console.log('Report clicked')}>Report</a>
+        <a href="/" target="_blank" rel="noopener noreferrer">
+          Homepage
+        </a>
       </div>
     </div>
   );

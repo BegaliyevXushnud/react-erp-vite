@@ -7,7 +7,6 @@ import BrandModal from '../../component/modal/brandmodal';
 import { GlobalPopconfirm } from '../../component';
 import TableComponent from '../../component/global-table'; // Sizning TableComponent
 
-
 const Brand = () => {
     const [data, setData] = useState([]);
     const [open, setOpen] = useState(false);

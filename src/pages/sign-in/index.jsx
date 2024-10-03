@@ -1,9 +1,10 @@
 import React from 'react';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Form, Input } from 'antd';
+import { Button, Form, Input, notification } from 'antd';
 import Erplogo from "../../assets/erplogo.jpg";
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../../service';
+
 const SignIn = () => {
     const navigate = useNavigate();
     const initialValues = {
@@ -21,26 +22,34 @@ const SignIn = () => {
                 const access_token = response?.data?.data?.tokens?.access_token;
                 console.log("Access token:", access_token);
                 localStorage.setItem("access_token", access_token);
-               
+                notification.success({
+                    message: 'Login Successful',
+                    description: 'You have successfully logged in.',
+                });
                 navigate("/admin-layout");
             } else {
-               console.log("xato bor");
-               
+               notification.error({
+                   message: 'Login Failed',
+                   description: 'An error occurred during login.',
+               });
             }
         } catch (err) {
             console.log(err.response?.data || err.message);
-           
+            notification.error({
+                message: 'Login Failed',
+                description: err.response?.data?.message || 'An unexpected error occurred.',
+            });
         }
     };
 
     return (
         <>
-            <div className='min-h-screen flex items-center justify-center'>
+            <div className='flex items-center justify-center min-h-screen'>
                 <div className='flex w-full max-w-[2440px] h-[100vh] bg-white shadow-lg'>
-                    <div className='hidden lg:block w-1/2 h-full '>
-                        <img src={Erplogo} alt="erplogo" className='w-full h-full object-cover' />
+                    <div className='hidden w-1/2 h-full lg:block '>
+                        <img src={Erplogo} alt="erplogo" className='object-cover w-full h-full' />
                     </div>
-                    <div className='w-full lg:w-1/2 flex flex-col justify-center  items-center px-4 sm:px-6 lg:px-8'>
+                    <div className='flex flex-col items-center justify-center w-full px-4 lg:w-1/2 sm:px-6 lg:px-8'>
                         <div className='w-full max-w-[460px] flex flex-col gap-1'>
                             <h1 className='font-semibold text-[40px] mb-8'>Login</h1>
                             <Form
@@ -61,18 +70,12 @@ const SignIn = () => {
                                 >
                                     <Input prefix={<LockOutlined className='text-[17px] text-[grey]' />} type="password" placeholder="Password" className='w-full h-[55px]' />
                                 </Form.Item>
-                                <Form.Item>
-                                    <div style={{ display: 'flex', justifyContent: 'space-evently', alignItems: 'center' }}>
-                                       
-                                    </div>
-                                </Form.Item>
                                 <Form.Item className='text-[#000000c4]'>
                                     <Button block type="success" htmlType="submit" className='bg-[#d45b07] text-white p-8 text-[20px]'>
                                         Log in
                                     </Button>
-                                    <div className="text-center mt-2">
-                                     
-                                        <a onClick={() => navigate("/sign-up")} className='text-[black] ' >Register now!</a>
+                                    <div className="mt-2 text-center">
+                                        <a onClick={() => navigate("/sign-up")} className='text-[black]'>Register now!</a>
                                     </div>
                                 </Form.Item>
                             </Form>

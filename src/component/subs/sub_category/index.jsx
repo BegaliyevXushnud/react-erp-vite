@@ -1,4 +1,3 @@
-// SubCategory.js
 import React, { useState, useEffect } from 'react';
 import { Button, message, Table, Input } from 'antd';
 import { sub_category } from '../../../../service'; // Adjust your import path accordingly
@@ -30,14 +29,14 @@ const SubCategory = () => {
     const getData = async (page = 1, limit = 10, search = '') => {
         try {
             const res = await sub_category.get(id);
-            setData(res?.data?.data?.subCategories || []);
+            setData(res?.data?.data?.subcategories || []); // Updated to match your API response
             setTotalItems(res?.data?.data?.total || 0);
         } catch (err) {
             console.error(err);
             message.error("Data fetching error occurred");
         }
     };
-
+    
     useEffect(() => {
         const access_token = localStorage.getItem('access_token');
         if (!access_token) {
@@ -134,18 +133,19 @@ const SubCategory = () => {
                 <Button className="add-btn" type="primary" onClick={() => setOpen(true)}>Add New Sub-category</Button>
             </div>
             <Table
-                columns={columns}
-                dataSource={data}
-                pagination={{
-                    current: currentPage,
-                    pageSize: pageSize,
-                    total: totalItems,
-                    onChange: handlePageChange,
-                    showSizeChanger: true,
-                    pageSizeOptions: [2, 5, 7, 10],
-                }}
-                rowKey={(item) => item.id}
-            />
+    columns={columns}
+    dataSource={data}
+    pagination={{
+        current: currentPage,
+        pageSize: pageSize,
+        total: totalItems,
+        onChange: handlePageChange,
+        showSizeChanger: true,
+        pageSizeOptions: [2, 5, 7, 10],
+    }}
+    rowKey={(item) => item.id} 
+/>
+
             
             <SubCategoryModal
                 open={open}
@@ -158,3 +158,4 @@ const SubCategory = () => {
 };
 
 export default SubCategory;
+

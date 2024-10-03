@@ -1,6 +1,6 @@
 import React from 'react';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Form, Input, Flex } from 'antd';
+import { Button, Form, Input, notification } from 'antd';
 import Erplogo from "../../assets/erplogo.jpg";
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../../../service';
@@ -15,19 +15,27 @@ const SignUp = () => {
         email: "",
         password: "",
     };
+
     const handleSubmit = async (values) => {
         console.log(values); 
         try {
             const response = await auth.sign_up(values);
             if (response.status === 201) {
+                notification.success({
+                    message: 'Registration Successful',
+                    description: 'You have successfully registered.',
+                });
                 navigate("/");
             }
         } catch (error) {
             console.log(error.response); 
+            notification.error({
+                message: 'Registration Failed',
+                description: error.response?.data?.message || 'An unexpected error occurred.',
+            });
         }
     };
     
-
     const onFinish = (values) => {
         console.log('Received values of form: ', values);
         handleSubmit(values); 
@@ -35,16 +43,16 @@ const SignUp = () => {
 
     return (
         <>
-            <div className='min-h-screen flex items-center justify-center'>
+            <div className='flex items-center justify-center min-h-screen'>
                 <div className='flex w-full max-w-[2440px] h-[100vh] bg-white shadow-lg'>
-                    <div className='hidden lg:block w-1/2 h-full'>
-                        <img src={Erplogo} alt="erplogo" className='w-full h-full object-cover' />
+                    <div className='hidden w-1/2 h-full lg:block'>
+                        <img src={Erplogo} alt="erplogo" className='object-cover w-full h-full' />
                     </div>
-                    <div className='w-full lg:w-1/2 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8'>
+                    <div className='flex flex-col items-center justify-center w-full px-4 lg:w-1/2 sm:px-6 lg:px-8'>
                         <div className='w-full max-w-[460px]'>
                             <h1 className='font-semibold text-[40px] mb-8'>Register</h1>
                             <Form
-                                name="login"
+                                name="register"
                                 initialValues={initialValues}
                                 onFinish={onFinish} 
                             >
@@ -113,20 +121,12 @@ const SignUp = () => {
                                     />
                                 </Form.Item>
 
-                                <Form.Item>
-                                    <Flex justify="space-between" align="center">
-                                        <Form.Item name="remember" valuePropName="checked" noStyle>
-                                        </Form.Item>
-                                        
-                                    </Flex>
-                                </Form.Item>
-
                                 <Form.Item className='text-[#000000c4]'>
                                     <Button block type="success" htmlType="submit" className='bg-[#d45b07] text-white p-8 text-[17px]'>
                                         Register
                                     </Button>
-                                    <div className="text-center mt-2 p-2">
-                                    Do you have an account 
+                                    <div className="p-2 mt-2 text-center">
+                                        Do you have an account 
                                         <a onClick={() => navigate("/")} className='text-[black]'>Login</a>
                                     </div>
                                 </Form.Item>

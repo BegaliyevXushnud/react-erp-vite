@@ -1,9 +1,11 @@
-// SubCategoryModal.js
 import { Button, Form, Input, Modal, message } from "antd";
 import { useEffect, useState } from "react";
 import subCategoryService from "../../../../service/sub_category"; // Adjust your import path accordingly
+import { useParams } from "react-router-dom"; // parent_category_id olish uchun
 
 const SubCategoryModal = ({ open, handleCancel, subCategory, refreshData }) => {  
+    const { id: parent_category_id } = useParams(); // parent_category_id ni oling
+
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
 
@@ -21,13 +23,18 @@ const SubCategoryModal = ({ open, handleCancel, subCategory, refreshData }) => {
         setLoading(true);
         
         try {
+            const payload = {
+                ...values,
+                parent_category_id: parseInt(parent_category_id), // parent_category_id ni qo'shish
+            };
+            
             if (subCategory?.id) {
                 // Update sub-category
-                await subCategoryService.update(subCategory.id, values);
+                await subCategoryService.update(subCategory.id, payload);
                 message.success("Sub-category updated successfully");
             } else {
                 // Create sub-category
-                await subCategoryService.create(values);
+                await subCategoryService.create(payload);
                 message.success("Sub-category created successfully");
             }
             refreshData(); // Refresh data after create/update

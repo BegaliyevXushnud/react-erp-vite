@@ -21,9 +21,10 @@ export const Index = () => {
               <Route path="ads" element={<Ads />} />
               <Route path="himiko" element={<Himiko />} />
             </Route>
-            <Route path="*" element={<NotFound />} /> 
           </Route>
+          <Route path="*" element={<NotFound />} /> 
         </Routes>
+       
       </HashRouter>
     );
 };

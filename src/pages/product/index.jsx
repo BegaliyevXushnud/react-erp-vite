@@ -1,42 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, message, Input } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { productService } from '../../../service'; // Adjust the import path if necessary
-import { GlobalTable } from '@component';
-import ProductModal from '../../component/modal'; // Adjust the import path if necessary
 import { useNavigate, useLocation } from 'react-router-dom';
+import ProductModal from '../../component/modal/productmodal'; // Adjust the import path if necessary
 import { GlobalPopconfirm } from '../../component';
+import GlobalTable from '../../component/global-table'; // Adjust the import path if necessary
+import Noimg from '../../assets/no_foto.jpg';
 
 const Product = () => {
     const [data, setData] = useState([]);
     const [open, setOpen] = useState(false);
-    const [update, setUpdate] = useState(null);
+    const [editingProduct, setEditingProduct] = useState(null);
     const [total, setTotal] = useState(0);
     const [params, setParams] = useState({
         search: '',
         page: 1,
-        limit: 10,
+        limit: 5,
     });
-
+    const handleClose = () => {
+        setOpen(false)
+    }
     const navigate = useNavigate();
     const { search } = useLocation();
 
     useEffect(() => {
         const params = new URLSearchParams(search);
-        let page = Number(params.get("page")) || 3;
-        let limit = Number(params.get("limit")) || 3;
-        let search_val = params.get("search") || '';
+        const page = Number(params.get('page')) || 1;
+        const limit = Number(params.get('limit')) || 5;
+        const searchParam = params.get("search") || "";
         setParams((prev) => ({
             ...prev,
             page: page,
             limit: limit,
-            search: search_val,
+            search: searchParam,
         }));
     }, [search]);
 
     const getData = async () => {
         try {
             const res = await productService.get(params);
+
             setData(res?.data?.data?.products || []);
             setTotal(res?.data?.data?.total || 0);
         } catch (err) {
@@ -60,18 +64,44 @@ const Product = () => {
     };
 
     const editItem = (item) => {
-        setUpdate(item);
+        setEditingProduct(item);
         setOpen(true);
     };
 
+    const navigateToSubCategory = (item) => {
+        navigate(`/admin-layout/product/sub-product/${item.id}`); // Adjusted for products
+    };
+
     const handleSearchChange = (event) => {
+        const searchValue = event.target.value;
         setParams((prev) => ({
             ...prev,
-            search: event.target.value,
+            search: searchValue,
         }));
+        
         const search_params = new URLSearchParams(search);
-        search_params.set("search", event.target.value);
-        navigate(`?${search_params}`);
+        search_params.set("search", searchValue);
+        navigate(`?${search_params}`); // Fixed the string interpolation
+    };
+
+    const handlePageChange = (pagination) => {
+        const { current, pageSize } = pagination;
+        setParams((prev) => ({
+            ...prev,
+            page: current,
+            limit: pageSize,
+        }));
+
+        const current_params = new URLSearchParams(search);
+        current_params.set('page', current); // Fixed the string interpolation
+        current_params.set('limit', pageSize); // Fixed the string interpolation
+        navigate(`?${current_params}`); // Fixed the string interpolation
+    };
+
+    // Updated handleCancel function
+    const handleCancel = () => {
+        setOpen(false);
+        setEditingProduct(null); // Reset the editingProduct state when closing
     };
 
     const columns = [
@@ -81,54 +111,57 @@ const Product = () => {
             render: (text, item, index) => (params.page - 1) * params.limit + index + 1,
         },
         {
-            title: 'Mahsulot nomi',
+            title: 'Product name',
             dataIndex: 'name',
             render: (text, item) => <a onClick={() => editItem(item)}>{text}</a>,
         },
         {
-            title: 'Narx',
+            title: 'Price',
             dataIndex: 'price',
         },
+        {
+            title: 'Image',
+            dataIndex: 'images',
+            render: (images) => (
+                <div>
+                    {images && images.length > 0 ? (
+                        images.map((image, index) => (
+                            <img
+                                key={index}
+                                src={image.url || Noimg} // Agar image.url bo'lmasa, Noimg ga o'zgartiring
+                                alt={`Image ${index + 1}`} 
+                                style={{ width: '50px', height: '50px', objectFit: 'cover', marginRight: '5px' }}
+                            />
+                        ))
+                    ) : (
+                        <img
+                            src={Noimg} 
+                            alt="Placeholder"
+                            style={{ width: '60px', height: '50px', objectFit: 'cover' }} // Placeholder
+                        />
+                    )}
+                </div>
+            ),
+        },
+        
         {
             title: 'Action',
             dataIndex: 'action',
             render: (text, item) => (
                 <div style={{ display: 'flex', gap: '10px' }}>
+                    <Button type="link" icon={<UnorderedListOutlined />} onClick={() => navigateToSubCategory(item)} />
+                    <Button type="link" icon={<EditOutlined />} onClick={() => editItem(item)} />
                     <GlobalPopconfirm
                         title="Mahsulotni o'chirishni tasdiqlaysizmi?"
                         onConfirm={() => handleDelete(item.id)}
                     >
                         <Button type="link" danger icon={<DeleteOutlined />} />
                     </GlobalPopconfirm>
-                    <Button type="link" icon={<EditOutlined />} onClick={() => editItem(item)} />
                 </div>
             ),
         },
     ];
-
-    const handleCancel = () => {
-        setOpen(false);
-        setUpdate(null);
-    };
-
-    const handlePageChange = (pagination) => {
-        const { current = 1, pageSize = 10 } = pagination;
-        setParams((prev) => ({
-            ...prev,
-            page: current,
-            limit: pageSize,
-        }));
-        
-        const search_params = new URLSearchParams(search);
-        search_params.set("page", current);  
-        search_params.set("limit", pageSize);  
-        navigate(`?${search_params}`);  
-    };
-
-    const refreshData = () => {
-        getData();
-    };
-
+    
     return (
         <div>
             <div className="header-container">
@@ -136,10 +169,10 @@ const Product = () => {
                     placeholder="Search..."
                     onChange={handleSearchChange}
                     value={params.search}
-                    className="search-input"  
-                    style={{ marginBottom: '16px' }} 
+                    className="search-input"
+                    style={{ marginBottom: '16px' }}
                 />
-                <Button className="add-btn" type="primary" onClick={() => setOpen(true)}>Yangi Mahsulot Qo'shish</Button>
+                <Button className="add-btn" type="primary" onClick={() => setOpen(true)}>Add New Product</Button>
             </div>
             <div className="table-container">
                 <GlobalTable
@@ -157,9 +190,9 @@ const Product = () => {
             </div>
             <ProductModal
                 open={open}
-                handleCancel={handleCancel}
-                product={update}
-                refreshData={refreshData}
+                handleClose={handleClose} // Pass the updated handleCancel function
+                product={editingProduct}
+                refreshData={getData} // Fetch new data after updates
             />
         </div>
     );
