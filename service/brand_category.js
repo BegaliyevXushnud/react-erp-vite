@@ -7,4 +7,4 @@ const BrandCategoryService = {
     delete: (id) => https.delete(`/brand-category/delete/${id}`)
 };
 
-export default BrandCategoryService; // Ensure you're exporting the correct object
+export default BrandCategoryService;

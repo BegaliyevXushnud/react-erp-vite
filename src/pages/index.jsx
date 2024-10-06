@@ -9,4 +9,5 @@ import BrandsCategory from "./brandscategory";
 import Stock from "./stock";
 import Settings from "./settings-page";
 import Himiko from "./Himiko";
-export {SignIn, SignUp, AdminLayout, Product,Category,Ads,Brands,BrandsCategory,Settings,Stock,Himiko}
+import ProductDetail from "./product-detail";
+export {SignIn, SignUp, AdminLayout, Product,Category,Ads,Brands,BrandsCategory,Settings,Stock,Himiko,ProductDetail}

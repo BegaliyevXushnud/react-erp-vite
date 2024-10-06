@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MenuFoldOutlined, MenuUnfoldOutlined, LogoutOutlined } from '@ant-design/icons';
-import { Button, Layout, Menu, theme, Modal, Space, Select } from 'antd';
+import { Button, Layout, Menu, theme, Modal, Space, Select, Tooltip } from 'antd'; // Tooltip import qilingan
 import { NavLink, useLocation, Outlet, useNavigate } from 'react-router-dom'; 
 import LogoImg from "../../assets/najot.jpg"; 
 import { useTranslation } from "react-i18next";
@@ -80,11 +80,13 @@ const Admin = () => {
   // Logout funktsiyasi
   const handleLogout = () => {
     setIsModalVisible(true);
+   
   };
 
   const handleOk = () => {
-    navigate('/login');
+    navigate('/');
     setIsModalVisible(false);
+    window.localStorage.removeItem('access_token')
   };
 
   const handleCancel = () => {
@@ -133,7 +135,6 @@ const Admin = () => {
             display: 'flex',
             justifyContent: 'space-between', // Space-between qo'shish
             alignItems: 'center',
-            
           }}
         >
           <Button
@@ -156,19 +157,21 @@ const Admin = () => {
                 { value: 'uz', label: 'uz' },
               ]}
             />
-            {/* Logout tugmasini yaxshiroq dizayn bilan qo'shish */}
-            <Button
-              type="primary"
-              icon={<LogoutOutlined />}
-              onClick={handleLogout}
-              style={{
-                borderRadius: borderRadiusLG, // Tugma burchaklarini yumshatish
-                display: 'flex',
-                alignItems: 'center',
-                height: '40px',
-                padding: '0 16px',
-              }}
-            />
+            {/* Tooltip va Logout tugmasini yaxshiroq dizayn bilan qo'shish */}
+            <Tooltip title="Logout" placement="bottom">
+              <Button
+                type="primary"
+                icon={<LogoutOutlined />}
+                onClick={handleLogout}
+                style={{
+                  borderRadius: borderRadiusLG, // Tugma burchaklarini yumshatish
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: '40px',
+                  padding: '0 16px',
+                }}
+              />
+            </Tooltip>
           </Space>
         </Header>
         <div className="p-3">

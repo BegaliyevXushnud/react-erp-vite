@@ -6,7 +6,6 @@ import brandService from "../../../../service/brand";
 import brandCategoryService from "../../../../service/brand_category";
 import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
 
-// Function to convert file to base64
 const getBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);

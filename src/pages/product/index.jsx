@@ -18,12 +18,11 @@ const Product = () => {
         page: 1,
         limit: 5,
     });
-    const handleClose = () => {
-        setOpen(false)
-    }
+
     const navigate = useNavigate();
     const { search } = useLocation();
 
+    // Fetching URL parameters
     useEffect(() => {
         const params = new URLSearchParams(search);
         const page = Number(params.get('page')) || 1;
@@ -37,14 +36,15 @@ const Product = () => {
         }));
     }, [search]);
 
+    // Fetching product data
     const getData = async () => {
         try {
             const res = await productService.get(params);
-
             setData(res?.data?.data?.products || []);
             setTotal(res?.data?.data?.total || 0);
         } catch (err) {
             console.error(err);
+            message.error("Data fetching error!");
         }
     };
 
@@ -52,6 +52,7 @@ const Product = () => {
         getData();
     }, [params]);
 
+    // Handle delete
     const handleDelete = async (id) => {
         try {
             await productService.delete(id);
@@ -68,8 +69,13 @@ const Product = () => {
         setOpen(true);
     };
 
-    const navigateToSubCategory = (item) => {
-        navigate(`/admin-layout/product/sub-product/${item.id}`); // Adjusted for products
+    const navigateToProductDetail = (item) => {
+        navigate(`/admin-layout/product/product-detail/${item.id}`, {
+            state: {
+                name: item.name,
+                price: item.price,
+            },
+        });
     };
 
     const handleSearchChange = (event) => {
@@ -78,10 +84,10 @@ const Product = () => {
             ...prev,
             search: searchValue,
         }));
-        
+
         const search_params = new URLSearchParams(search);
         search_params.set("search", searchValue);
-        navigate(`?${search_params}`); // Fixed the string interpolation
+        navigate(`?${search_params}`);
     };
 
     const handlePageChange = (pagination) => {
@@ -93,13 +99,12 @@ const Product = () => {
         }));
 
         const current_params = new URLSearchParams(search);
-        current_params.set('page', current); // Fixed the string interpolation
-        current_params.set('limit', pageSize); // Fixed the string interpolation
-        navigate(`?${current_params}`); // Fixed the string interpolation
+        current_params.set('page', current);
+        current_params.set('limit', pageSize);
+        navigate(`?${current_params}`);
     };
 
-    // Updated handleCancel function
-    const handleCancel = () => {
+    const handleClose = () => {
         setOpen(false);
         setEditingProduct(null); // Reset the editingProduct state when closing
     };
@@ -111,7 +116,7 @@ const Product = () => {
             render: (text, item, index) => (params.page - 1) * params.limit + index + 1,
         },
         {
-            title: 'Product name',
+            title: 'Product Name',
             dataIndex: 'name',
             render: (text, item) => <a onClick={() => editItem(item)}>{text}</a>,
         },
@@ -128,7 +133,7 @@ const Product = () => {
                         images.map((image, index) => (
                             <img
                                 key={index}
-                                src={image.url || Noimg} // Agar image.url bo'lmasa, Noimg ga o'zgartiring
+                                src={image.url || Noimg} // Use Noimg if image.url is not available
                                 alt={`Image ${index + 1}`} 
                                 style={{ width: '50px', height: '50px', objectFit: 'cover', marginRight: '5px' }}
                             />
@@ -143,13 +148,12 @@ const Product = () => {
                 </div>
             ),
         },
-        
         {
             title: 'Action',
             dataIndex: 'action',
             render: (text, item) => (
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <Button type="link" icon={<UnorderedListOutlined />} onClick={() => navigateToSubCategory(item)} />
+                    <Button type="link" icon={<UnorderedListOutlined />} onClick={() => navigateToProductDetail(item)} />
                     <Button type="link" icon={<EditOutlined />} onClick={() => editItem(item)} />
                     <GlobalPopconfirm
                         title="Mahsulotni o'chirishni tasdiqlaysizmi?"
@@ -190,7 +194,7 @@ const Product = () => {
             </div>
             <ProductModal
                 open={open}
-                handleClose={handleClose} // Pass the updated handleCancel function
+                handleClose={handleClose}
                 product={editingProduct}
                 refreshData={getData} // Fetch new data after updates
             />

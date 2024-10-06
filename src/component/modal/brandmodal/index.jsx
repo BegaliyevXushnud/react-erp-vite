@@ -117,17 +117,11 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
                         listType="picture"
                         showUploadList={false}
                         onChange={handleImageChange}
-                        beforeUpload={() => false} // Disable automatic upload
+                        beforeUpload={() => false}
                     >
                         <Button icon={<UploadOutlined />}>Upload Image</Button>
                     </Upload>
-                    {imageUrl && (
-                        <img 
-                            src={imageUrl} 
-                            alt="Uploaded" 
-                            style={{ marginTop: '10px', width: '100px', height: '100px' }} 
-                        />
-                    )}
+                    {imageUrl && <img src={imageUrl} alt="Brand" style={{ width: "100px", marginTop: "10px" }} />}
                 </Form.Item>
 
                 <Form.Item
@@ -135,25 +129,21 @@ const BrandModal = ({ open, handleCancel, brand, refreshData }) => {
                     name="category_id"
                     rules={[{ required: true, message: "Please select a category" }]}
                 >
-                    <Select
-                        size="large"
-                        placeholder="Select a category"
-                        options={categories.map(category => ({
-                            label: category.name,
-                            value: category.id
-                        }))}
-                    />
+                    <Select placeholder="Select category" size="large">
+                        {categories.map((category) => (
+                            <Select.Option key={category.id} value={category.id}>
+                                {category.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
                 </Form.Item>
 
                 <Form.Item>
-                    <Button
-                        size="large"
-                        style={{ width: "100%" }}
-                        type="primary"
-                        htmlType="submit"
-                        loading={loading}
-                    >
-                        {brand?.name ? "Update" : "Add"}
+                    <Button type="primary" htmlType="submit" loading={loading}>
+                        {brand?.id ? "Update" : "Create"}
+                    </Button>
+                    <Button style={{ marginLeft: 8 }} onClick={handleCancel}>
+                        Cancel
                     </Button>
                 </Form.Item>
             </Form>

@@ -1,101 +1,108 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button, message, Input } from 'antd';
-import  brand_category  from '../../../service/brand_category'; // Adjust the import path accordingly
+import brandCategoryService from '../../../service/brand_category';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import BrandCategoryModal from '../../component/modal/brandcategorymodal'; // Adjust the import path accordingly
-import { GlobalPopconfirm } from '../../component';
-import TableComponent from '../../component/global-table'; // Use your TableComponent
-
+import BrandCategoryDrawer from '../../component/modal/brandcategorymodal';
+import GlobalPopconfirm from '../../component/globalpopconfirm';
+import TableComponent from '../../component/global-table';
 
 const BrandCategory = () => {
     const [data, setData] = useState([]);
-    const [open, setOpen] = useState(false);
-    const [update, setUpdate] = useState(null);
-    const [total, setTotal] = useState(0);
-    const [params, setParams] = useState({
+    const [openDrawer, setOpenDrawer] = useState(false);
+    const [currentCategory, setCurrentCategory] = useState(null);
+    const [totalCategories, setTotalCategories] = useState(0);
+    const [paginationParams, setPaginationParams] = useState({
         search: '',
         page: 1,
-        limit: 10,
+        limit: 5,
     });
 
     const navigate = useNavigate();
     const { search } = useLocation();
 
+    // Get pagination parameters from URL
     useEffect(() => {
-        const queryParams = new URLSearchParams(search);
-        let page = Number(queryParams.get("page")) || 1;
-        let limit = Number(queryParams.get("limit")) || 10;
-        let search_val = queryParams.get("search") || '';
-        setParams((prev) => ({
-            ...prev,
-            page: page,
-            limit: limit,
-            search: search_val,
-        }));
+        const urlParams = new URLSearchParams(search);
+        const page = Number(urlParams.get('page')) || 1;
+        const limit = Number(urlParams.get('limit')) || 5;
+        const searchParam = urlParams.get("search") || "";
+        setPaginationParams({ page, limit, search: searchParam });
     }, [search]);
 
-    const getData = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
-            const res = await brand_category.get(params);
+            const res = await brandCategoryService.get(paginationParams);
             setData(res?.data?.data?.brandCategories || []);
-            setTotal(res?.data?.data?.total || 0);
-        } catch (err) {
-            console.error(err);
-            message.error("Error fetching data");
-        }
-    };
-
-    useEffect(() => {
-        getData();
-    }, [params]);
-
-    const handleDelete = async (id) => {
-        try {
-            await brand_category.delete(id);
-            message.success("Brand category deleted successfully");
-            getData();
+            setTotalCategories(res?.data?.data?.count || 0);
         } catch (error) {
             console.error(error);
-            message.error("Error deleting brand category");
+            message.error("Error fetching categories. Please try again later.");
+        }
+    }, [paginationParams]);
+
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
+
+    const handleDeleteCategory = async (id) => {
+        try {
+            await brandCategoryService.delete(id);
+            message.success("Brand Category successfully deleted.");
+            fetchCategories();
+        } catch (error) {
+            console.error(error);
+            message.error("Error deleting Brand Category. Please try again.");
         }
     };
 
-    const editItem = (item) => {
-        setUpdate(item);
-        setOpen(true);
+    const handleEditCategory = (item) => {
+        setCurrentCategory(item);
+        setOpenDrawer(true);
     };
 
     const handleSearchChange = (event) => {
-        setParams((prev) => ({
-            ...prev,
-            search: event.target.value,
-        }));
-        const search_params = new URLSearchParams(search);
-        search_params.set("search", event.target.value);
-        navigate(`?${search_params}`);
+        const newSearchValue = event.target.value;
+        setPaginationParams((prev) => ({ ...prev, search: newSearchValue }));
+        const searchParams = new URLSearchParams(search);
+        searchParams.set("search", newSearchValue);
+        navigate(`?${searchParams}`);
+    };
+
+    const handlePageChange = (pagination) => {
+        const { current, pageSize } = pagination;
+        setPaginationParams((prev) => ({ ...prev, page: current, limit: pageSize }));
+        const currentParams = new URLSearchParams(search);
+        currentParams.set('page', `${current}`);
+        currentParams.set('limit', `${pageSize}`);
+        navigate(`?${currentParams}`);
+    };
+
+    const handleCloseDrawer = () => {
+        setOpenDrawer(false);
+        setCurrentCategory(null);
     };
 
     const columns = [
         {
             title: '№',
             dataIndex: 'index',
-            render: (text, item, index) => (params.page - 1) * params.limit + index + 1,
+            render: (text, item, index) => (paginationParams.page - 1) * paginationParams.limit + index + 1,
         },
         {
-            title: 'Brand category name',
+            title: 'Brand Category',
             dataIndex: 'name',
-            render: (text, item) => <a onClick={() => editItem(item)}>{text}</a>,
+            render: (text, item) => <a onClick={() => handleEditCategory(item)}>{text}</a>,
         },
         {
             title: 'Action',
             dataIndex: 'action',
             render: (text, item) => (
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <Button type="link" icon={<EditOutlined />} onClick={() => editItem(item)} />
+                    <Button type="link" icon={<EditOutlined />} onClick={() => handleEditCategory(item)} />
                     <GlobalPopconfirm
-                        title="Are you sure to delete this brand category?"
-                        onConfirm={() => handleDelete(item.id)}
+                        title="Are you sure you want to delete this brand?"
+                        onConfirm={() => handleDeleteCategory(item.id)}
                     >
                         <Button type="link" danger icon={<DeleteOutlined />} />
                     </GlobalPopconfirm>
@@ -104,61 +111,37 @@ const BrandCategory = () => {
         },
     ];
 
-    const handleCancel = () => {
-        setOpen(false);
-        setUpdate(null);
-    };
-
-    const handlePageChange = (pagination) => {
-        const { current = 1, pageSize = 10 } = pagination;
-
-        setParams((prev) => ({
-            ...prev,
-            page: current,
-            limit: pageSize,
-        }));
-
-        const search_params = new URLSearchParams(search);
-        search_params.set("page", current);
-        search_params.set("limit", pageSize);
-        navigate(`?${search_params}`);
-    };
-
-    const refreshData = () => {
-        getData();
-    };
-
     return (
         <div>
             <div className="header-container">
                 <Input
                     placeholder="Search..."
                     onChange={handleSearchChange}
-                    value={params.search}
+                    value={paginationParams.search}
                     className="search-input"
                     style={{ marginBottom: '16px' }}
                 />
-                <Button className="add-btn" type="primary" onClick={() => setOpen(true)}>Add New Brand Category</Button>
+                <Button className="add-btn" type="primary" onClick={() => setOpenDrawer(true)}>Add New Category</Button>
             </div>
             <div className="table-container">
                 <TableComponent
                     columns={columns}
                     data={data}
                     pagination={{
-                        current: params.page,
-                        pageSize: params.limit,
-                        total: total,
+                        current: paginationParams.page,
+                        pageSize: paginationParams.limit,
+                        total: totalCategories,
                         showSizeChanger: true,
-                        pageSizeOptions: ["5", "10", "15", "20"],
+                        pageSizeOptions: ["3", "5", "7", "10", "12"],
                     }}
                     handleChange={handlePageChange}
                 />
             </div>
-            <BrandCategoryModal
-                open={open}
-                handleCancel={handleCancel}
-                brandCategory={update}
-                refreshData={refreshData}
+            <BrandCategoryDrawer
+                open={openDrawer}
+                handleClose={handleCloseDrawer}
+                brandCategory={currentCategory}
+                refreshData={fetchCategories}
             />
         </div>
     );

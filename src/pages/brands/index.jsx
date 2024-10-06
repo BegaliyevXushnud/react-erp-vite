@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button, message, Input } from 'antd';
 import { brandService } from '../../../service'; 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import BrandModal from '../../component/modal/brandmodal';
 import { GlobalPopconfirm } from '../../component';
-import TableComponent from '../../component/global-table'; // Sizning TableComponent
+import TableComponent from '../../component/global-table';
 
-const Brand = () => {
+const Brand= () => {
     const [data, setData] = useState([]);
     const [open, setOpen] = useState(false);
-    const [update, setUpdate] = useState(null);
+    const [editingCategory, setEditingCategory] = useState(null);
     const [total, setTotal] = useState(0);
     const [params, setParams] = useState({
         search: '',
@@ -21,32 +21,33 @@ const Brand = () => {
     const navigate = useNavigate();
     const { search } = useLocation();
 
+    // URL dan paramsni olish
     useEffect(() => {
-        const params = new URLSearchParams(search);
-        let page = Number(params.get("page")) || 1;
-        let limit = Number(params.get("limit")) || 5;
-        let search_val = params.get("search") || '';
+        const urlParams = new URLSearchParams(search);
+        const page = Number(urlParams.get('page')) || 1;
+        const limit = Number(urlParams.get('limit')) || 5;
+        const searchParam = urlParams.get("search") || "";
         setParams((prev) => ({
             ...prev,
             page: page,
             limit: limit,
-            search: search_val,
+            search: searchParam,
         }));
     }, [search]);
 
-    const getData = async () => {
+    const getData = useCallback(async () => {
         try {
-            const res = await brandService.get(params);  // Params o'rniga `params` ni uzating
+            const res = await brandService.get(params);
             setData(res?.data?.data?.brands || []);
-            setTotal(res?.data?.data?.total || 0);
+            setTotal(res?.data?.data?.count || 0);
         } catch (err) {
             console.error(err);
         }
-    };
+    }, [params]);
 
     useEffect(() => {
         getData();
-    }, [params]);
+    }, [getData]);
 
     const handleDelete = async (id) => {
         try {
@@ -55,23 +56,42 @@ const Brand = () => {
             getData();
         } catch (error) {
             console.error(error);
-            message.error("Brandni o'chirishda xatolik yuz berdi");
+            message.error("Brand o'chirishda xatolik yuz berdi");
         }
     };
 
     const editItem = (item) => {
-        setUpdate(item);
+        setEditingCategory(item);
         setOpen(true);
     };
 
     const handleSearchChange = (event) => {
+        const newSearchValue = event.target.value;
         setParams((prev) => ({
             ...prev,
-            search: event.target.value,
+            search: newSearchValue,
         }));
-        const search_params = new URLSearchParams(search);
-        search_params.set("search", event.target.value);
-        navigate(`?${search_params}`);
+        const searchParams = new URLSearchParams(search);
+        searchParams.set("search", newSearchValue);
+        navigate(`?${searchParams}`);
+    };
+
+    const handlePageChange = (pagination) => {
+        const { current, pageSize } = pagination;
+        setParams((prev) => ({
+            ...prev,
+            page: current,
+            limit: pageSize,
+        }));
+        const currentParams = new URLSearchParams(search);
+        currentParams.set('page', `${current}`);
+        currentParams.set('limit', `${pageSize}`);
+        navigate(`?${currentParams}`);
+    };
+
+    const handleCancel = () => {
+        setOpen(false);
+        setEditingCategory(null);
     };
 
     const columns = [
@@ -99,7 +119,7 @@ const Brand = () => {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <Button type="link" icon={<EditOutlined />} onClick={() => editItem(item)} />
                     <GlobalPopconfirm
-                        title="Brandni o'chirishni tasdiqlaysizmi?"
+                        title="Brandi o'chirishni tasdiqlaysizmi?"
                         onConfirm={() => handleDelete(item.id)}
                     >
                         <Button type="link" danger icon={<DeleteOutlined />} />
@@ -108,30 +128,6 @@ const Brand = () => {
             ),
         },
     ];
-
-    const handleCancel = () => {
-        setOpen(false);
-        setUpdate(null);
-    };
-
-    const handlePageChange = (pagination) => {
-        const { current = 1, pageSize = 5 } = pagination;
-
-        setParams((prev) => ({
-            ...prev,
-            page: current,
-            limit: pageSize,
-        }));
-        
-        const search_params = new URLSearchParams(search);
-        search_params.set("page", current);  
-        search_params.set("limit", pageSize);  
-        navigate(`?${search_params}`);  
-    };
-
-    const refreshData = () => {
-        getData();
-    };
 
     return (
         <div>
@@ -143,7 +139,7 @@ const Brand = () => {
                     className="search-input"
                     style={{ marginBottom: '16px' }}
                 />
-                <Button className="add-btn" type="primary" onClick={() => setOpen(true)}>Add New Brand</Button>
+                <Button className="add-btn" type="primary" onClick={() => setOpen(true)}>Add New Category</Button>
             </div>
             <div className="table-container">
                 <TableComponent
@@ -154,7 +150,7 @@ const Brand = () => {
                         pageSize: params.limit,
                         total: total,
                         showSizeChanger: true,
-                        pageSizeOptions: ["5", "10", "15"],
+                        pageSizeOptions: ["3", "5", "7", "10", "12"],
                     }}
                     handleChange={handlePageChange}
                 />
@@ -162,8 +158,8 @@ const Brand = () => {
             <BrandModal
                 open={open}
                 handleCancel={handleCancel}
-                brand={update}
-                refreshData={refreshData}
+                category={editingCategory}
+                refreshData={getData} 
             />
         </div>
     );

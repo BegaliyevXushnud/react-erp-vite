@@ -23,7 +23,7 @@ const SignIn = () => {
                 console.log("Access token:", access_token);
                 localStorage.setItem("access_token", access_token);
                 notification.success({
-                    message: 'Login Successful',
+                    message: 'Login Successfully',
                     description: 'You have successfully logged in.',
                 });
                 navigate("/admin-layout");
